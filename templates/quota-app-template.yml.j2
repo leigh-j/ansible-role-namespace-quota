@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata: 
+  name: "{{ item.key }}-app-quota"
+spec:
+  hard:
+    memory: "{{ item.value.quota.memory|default(project_resources_defaults.quota.memory) }}"
+    limits.memory: "{{ item.value.quota.limits_memory|default(project_resources_defaults.quota.limits_memory) }}"
+    cpu: "{{ item.value.quota.cpu|default(project_resources_defaults.quota.cpu) }}"
+    limits.cpu: "{{ item.value.quota.limits_cpu|default(project_resources_defaults.quota.limits_cpu) }}"
+{% if include_scope|default(false) %}
+# Not the following can only exist when creating the quota, same file use for update throws
+# Invalid value: ["NotTerminating"]: field is immutable
+  scopes:
+    - NotTerminating
+{% endif %}

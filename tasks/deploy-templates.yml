@@ -1,0 +1,82 @@
+---
+# templates created for variouse oc commands
+# command driven config, we have to create the files for the commands
+
+- name: create asset dir if it does not exist.
+  become: true
+  file:
+    path: "{{ openshift_assets_dir }}"
+    state: directory
+# see https://github.com/ansible/ansible/issues23530
+    owner: "{{ ansible_user|default(lookup('env','USER')) }}"
+    mode: 0775
+  tags:
+    - templates
+
+- name: Install project templates to node
+  template:
+    dest: "{{ openshift_assets_dir }}/project-template.yml"
+    src: "project-template.yml.j2"
+    force: yes
+  tags:
+    - templates
+
+- name: deploy custom quotas to node
+  template:
+    dest: "{{ openshift_assets_dir }}/{{item.key}}-quota.yml"
+    src: quota-template.yml.j2
+    force: yes
+  with_dict: "{{ project_resources }}"
+  tags:
+    - templates
+
+- name: deploy custom scoped quotas to node
+  template:
+    dest: "{{ openshift_assets_dir }}/{{item.key}}-app-quota.yml"
+    src: quota-app-template.yml.j2
+    force: yes
+  with_dict: "{{ project_resources }}"
+  vars:
+    include_scope: true
+  tags:
+    - templates
+
+- name: deploy custom limits to node
+  template:
+    dest: "{{ openshift_assets_dir }}/{{item.key}}-limits.yml"
+    src: limits-template.yml.j2
+  with_dict: "{{ project_resources }}"
+  tags:
+    - templates
+
+- name: deploy default quotas to node
+  template:
+    dest: "{{ openshift_assets_dir }}/{{item.key}}-quota.yml"
+    src: quota-template.yml.j2
+    force: yes
+  with_dict: 
+    "default": "{{ project_resources_defaults }}"
+  tags:
+    - templates
+
+- name: deploy default scoped quotas to node
+  template:
+    dest: "{{ openshift_assets_dir }}/{{item.key}}-app-quota.yml"
+    src: quota-app-template.yml.j2
+    force: yes
+  with_dict: 
+    "default": "{{ project_resources_defaults }}"
+  vars:
+    include_scope: true
+  tags:
+    - templates
+
+- name: deploy default limits to node
+  template:
+    dest: "{{ openshift_assets_dir }}/{{item.key}}-limits.yml"
+    src: limits-template.yml.j2
+  with_dict: 
+    "default": "{{ project_resources_defaults }}"
+  tags:
+    - templates
+

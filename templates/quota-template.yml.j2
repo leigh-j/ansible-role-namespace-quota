@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata: 
+  name: "{{ item.key }}-quota"
+spec:
+  hard: 
+    persistentvolumeclaims: "{{ item.value.quota.persistentvolumeclaims|default(project_resources_defaults.quota.persistentvolumeclaims) }}"
+    requests.storage: "{{ item.value.quota.requests_storage|default(project_resources_defaults.quota.requests_storage) }}"
+    pods: "{{ item.value.quota.pods|default(project_resources_defaults.quota.pods) }}"
+    services: "{{ item.value.quota.services|default(project_resources_defaults.quota.services) }}"
+    secrets: "{{ item.value.quota.secrets|default(project_resources_defaults.quota.secrets) }}"

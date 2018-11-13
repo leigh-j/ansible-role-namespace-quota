@@ -1,0 +1,71 @@
+---
+
+- name: deploy templates
+  include: deploy-templates.yml
+  tags:
+    - templates
+
+- name: get all projects
+  become: false
+  shell: '{{oc_path}}/oc get projects --output=json'
+  register: project_json
+
+- name: extract all project names to all_project_names fact
+  set_fact: 
+    all_project_names: "{{ project_json.stdout|from_json|json_query('*[*].metadata.name')}}"
+
+- name: union var
+  set_fact: 
+    ansible_projects: "{{ ansible_projects|default([]) }}+{{item}}"
+  with_list: "{{ project_resources|json_query('*.projects')}}"
+
+- name: get all default projects
+  set_fact: 
+    all_default_projects: "{{all_project_names[0]|difference(ansible_projects)}}"
+
+- name: check for configured projects that dont exist
+  set_fact:
+    configured_missing_projects: "{{ ansible_projects|difference(all_project_names[0])}}"
+
+- name: sanity check our config
+  debug:
+    msg: "projects are configured that dont exist in the cluster, please update the config or set skip_missing_quota_projects: true 
+configured_missing_projects: {{configured_missing_projects}}"
+  when: configured_missing_projects.0 is defined
+  failed_when: 
+    - (configured_missing_projects.0 is defined) 
+    - not skip_missing_quota_projects
+
+- name: load defaults
+  include: set-quota.yml
+  with_dict: 
+    "default": 
+      "projects": "{{ all_default_projects|default({}) }}"
+  loop_control:
+    loop_var: quota_config
+
+- name: load non default quotas
+  include: set-quota.yml
+  with_dict: "{{ project_resources }}"
+  loop_control:
+    loop_var: quota_config
+
+# first time this is run neeed to use create, otherwise replace, there is no 'create or replace' option
+- name: replace Templates to default project
+  command: "{{oc_path}}/oc replace -f {{openshift_assets_dir}}/{{ item}} -n default {{ oc_options }}"
+  with_items:
+    - project-template.yml
+  register: replace_result
+# Note the double escaping in the string, this is because stderr var escapes " \ from the output
+  failed_when:
+    - "replace_result.rc != 0"
+    - "'templates \\\"project-template\\\" not found' not in replace_result.stderr"
+
+- name: add Templates to default project
+  command: "{{oc_path}}/oc create -f {{openshift_assets_dir}}/{{ item}} -n default {{ oc_options }}"
+  with_items:
+   - project-template.yml
+  register: add_result
+  failed_when:
+    - "add_result.rc != 0"
+    - "'already exists' not in add_result.stderr"

@@ -1,0 +1,29 @@
+- name: see quota_config
+  debug: 
+    var: quota_config
+    verbosity: 3
+
+- name: create update quotas
+  ignore_errors: "{{ skip_missing_quota_projects }}"
+  block:  
+    - name: clear current quotas
+      command: "{{oc_path}}/oc delete quota --all -n {{ item}} {{ oc_options }}"
+      with_items: "{{ quota_config.value.projects }}"
+    
+    - name: clear current limits
+      command: "{{oc_path}}/oc delete limits --all -n {{ item}} {{ oc_options }}"
+      with_items: "{{ quota_config.value.projects }}"
+    
+    - name: create limits
+      command: "{{oc_path}}/oc create -f {{openshift_assets_dir}}/{{quota_config.key}}-limits.yml -n {{ item }} {{ oc_options }}"
+      with_items: "{{ quota_config.value.projects }}"
+    
+    - name: create quota    
+      command: "{{oc_path}}/oc create -f {{openshift_assets_dir}}/{{quota_config.key}}-quota.yml -n {{ item }} {{ oc_options }}"
+      with_items: "{{ quota_config.value.projects }}"
+    
+    - name: create quota-app
+      command: "{{oc_path}}/oc create -f {{openshift_assets_dir}}/{{quota_config.key}}-app-quota.yml -n {{ item }} {{ oc_options }}"
+      with_items: "{{ quota_config.value.projects }}"
+
+

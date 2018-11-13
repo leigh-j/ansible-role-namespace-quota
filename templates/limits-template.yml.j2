@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: "LimitRange"
+metadata: 
+  name: "{{ item.key }}-limits"
+spec:
+  limits:
+  - type: "Pod"
+    max:
+      cpu: "{{item.value.limits.pod.max_cpu|default(project_resources_defaults.limits.pod.max_cpu)}}"
+      memory: "{{ item.value.limits.pod.max_memory|default(project_resources_defaults.limits.pod.max_memory) }}"
+    min:
+      cpu: "{{ item.value.limits.pod.min_cpu|default(project_resources_defaults.limits.pod.min_cpu)}}"
+      memory: "{{ item.value.limits.pod.min_memory|default(project_resources_defaults.limits.pod.min_memory) }}"
+  - type: "Container"
+    max:
+      cpu: "{{item.value.limits.container.max_cpu|default(project_resources_defaults.limits.container.max_cpu)}}"
+      memory: "{{ item.value.limits.container.max_memory|default(project_resources_defaults.limits.container.max_memory) }}"
+    min:
+      cpu: "{{item.value.limits.container.min_cpu|default(project_resources_defaults.limits.container.min_cpu)}}"
+      memory: "{{ item.value.limits.container.min_memory|default(project_resources_defaults.limits.container.min_memory)  }}"
+    default:
+      cpu: "{{ item.value.limits.container.default_cpu|default(project_resources_defaults.limits.container.default_cpu)}}"
+      memory: "{{ item.value.limits.container.default_memory|default(project_resources_defaults.limits.container.default_memory) }}"
+    defaultRequest:
+      cpu: "{{item.value.limits.container.default_request_cpu|default(project_resources_defaults.limits.container.default_request_cpu) }}"
+      memory: "{{ item.value.limits.container.default_request_memory|default(project_resources_defaults.limits.container.default_request_memory) }}" 

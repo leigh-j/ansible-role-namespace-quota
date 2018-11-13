@@ -1,0 +1,128 @@
+apiVersion: v1
+kind: Template
+metadata:
+  creationTimestamp: null
+  name: project-template
+objects:
+- apiVersion: v1
+  kind: Project
+  metadata:
+    annotations:
+      openshift.io/description: ${PROJECT_DESCRIPTION}
+      openshift.io/display-name: ${PROJECT_DISPLAYNAME}
+      openshift.io/requester: ${PROJECT_REQUESTING_USER}
+    creationTimestamp: null
+    name: ${PROJECT_NAME}
+  spec: {}
+  status: {}
+- apiVersion: v1
+  kind: ResourceQuota
+  metadata: 
+    name: "default-quota"
+  spec:
+    hard: 
+      persistentvolumeclaims: "{{ project_resources_defaults.quota.persistentvolumeclaims }}"
+      requests.storage: "{{ project_resources_defaults.quota.requests_storage }}"
+      pods: "{{ project_resources_defaults.quota.pods }}"
+      services: "{{ project_resources_defaults.quota.services }}"
+      secrets: "{{ project_resources_defaults.quota.secrets }}"
+- apiVersion: v1
+  kind: ResourceQuota
+  metadata: 
+    name: "default-app-quota"
+  spec:
+    hard: 
+      memory: "{{ project_resources_defaults.quota.memory }}"
+      cpu: "{{ project_resources_defaults.quota.cpu }}" 
+      limits.cpu: "{{ project_resources_defaults.quota.limits_cpu }}"
+      limits.memory: "{{ project_resources_defaults.quota.limits_memory }}"
+    scopes:
+    - NotTerminating
+- apiVersion: v1
+  kind: "LimitRange"
+  metadata:
+    name: "default-limits"
+  spec:
+    limits:
+      - type: "Pod"
+        max: 
+          cpu: "{{ project_resources_defaults.limits.pod.max_cpu}}"
+          memory: "{{ project_resources_defaults.limits.pod.max_memory}}"
+        min:
+          cpu: "{{ project_resources_defaults.limits.pod.min_cpu}}"
+          memory: "{{ project_resources_defaults.limits.pod.min_memory }}"
+      - type: "Container"
+        max: 
+          cpu: "{{ project_resources_defaults.limits.container.max_cpu }}"
+          memory: "{{ project_resources_defaults.limits.container.max_memory }}"
+        min:
+          cpu: "{{ project_resources_defaults.limits.container.min_cpu }}"
+          memory: "{{ project_resources_defaults.limits.container.min_memory}}"
+        default:
+          cpu: "{{ project_resources_defaults.limits.container.default_cpu}}"
+          memory: "{{ project_resources_defaults.limits.container.default_memory }}" 
+        defaultRequest:
+          cpu: "{{ project_resources_defaults.limits.container.default_request_cpu}}"
+          memory: "{{ project_resources_defaults.limits.container.default_request_memory }}" 
+- apiVersion: v1
+  groupNames:
+  - system:serviceaccounts:${PROJECT_NAME}
+  kind: RoleBinding
+  metadata:
+    creationTimestamp: null
+    name: system:image-pullers
+    namespace: ${PROJECT_NAME}
+  roleRef:
+    name: system:image-puller
+  subjects:
+  - kind: SystemGroup
+    name: system:serviceaccounts:${PROJECT_NAME}
+  userNames: null
+- apiVersion: v1
+  groupNames: null
+  kind: RoleBinding
+  metadata:
+    creationTimestamp: null
+    name: system:image-builders
+    namespace: ${PROJECT_NAME}
+  roleRef:
+    name: system:image-builder
+  subjects:
+  - kind: ServiceAccount
+    name: builder
+  userNames:
+  - system:serviceaccount:${PROJECT_NAME}:builder
+- apiVersion: v1
+  groupNames: null
+  kind: RoleBinding
+  metadata:
+    creationTimestamp: null
+    name: system:deployers
+    namespace: ${PROJECT_NAME}
+  roleRef:
+    name: system:deployer
+  subjects:
+  - kind: ServiceAccount
+    name: deployer
+  userNames:
+  - system:serviceaccount:${PROJECT_NAME}:deployer
+- apiVersion: v1
+  groupNames: null
+  kind: RoleBinding
+  metadata:
+    creationTimestamp: null
+    name: admin
+    namespace: ${PROJECT_NAME}
+  roleRef:
+    name: admin
+  subjects:
+  - kind: User
+    name: ${PROJECT_ADMIN_USER}
+  userNames:
+  - ${PROJECT_ADMIN_USER}
+parameters:
+- name: PROJECT_NAME
+- name: PROJECT_DISPLAYNAME
+- name: PROJECT_DESCRIPTION
+- name: PROJECT_ADMIN_USER
+- name: PROJECT_REQUESTING_USER

@@ -1,0 +1,61 @@
+---
+# defaults file for ose-quota
+
+openshift_assets_dir: '/usr/local/lib/openshift-assets'
+
+
+oc_login_url: 'https://console.paas.vm.cbr.lab:8443 '
+oc_options: '--insecure-skip-tls-verify '
+oc_path: '/usr/local/bin/'
+
+# this is just a guide, add to group vars and manage from there.
+project_resources_defaults:
+  quota:  
+    persistentvolumeclaims: '10'
+    requests_storage: '50Gi'
+    pods: '20'
+    services: '20'
+    secrets: '100'
+    cpu: '10'
+    memory: '20480Mi'
+    limits_cpu: '10'
+    limits_memory: '20Gi'
+  limits:
+    pod:
+      max_cpu: '10'
+      min_cpu: '10m'
+      max_memory: '20Gi'
+      min_memory: '6Mi'
+    container:
+      max_cpu: '10'
+      min_cpu: '10m'
+      default_cpu: '1'
+      default_request_cpu: '200m'
+      max_memory: '20Gi'
+      min_memory: '6Mi'
+      default_memory: '4096Mi'
+      default_request_memory: '1024Mi'
+
+project_resources:
+  large:
+    projects:
+      - specialquota
+      - superspecial
+    quota:
+      limits_memory: '2048Mi'
+      limits_cpu: '6'
+    limits:
+      pod:
+        max_cpu: '4'
+      container: {}
+  larger:
+    projects:
+      - blah
+    quota:
+      limits_cpu: '8'
+    limits: 
+      pod: {}
+      container: {}
+
+    
+ 
