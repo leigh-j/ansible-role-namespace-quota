@@ -1,7 +1,7 @@
 OSE-Quota
 =========
 
-Manages and openshift project and quota defaults post deployment. Potentially this role can manage anything that only requires 'oc create -f {{ template }}' post deployment.
+Manages and openshift project and quota defaults post deployment. 
 
 Requirements
 ------------
